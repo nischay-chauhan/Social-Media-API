@@ -182,4 +182,55 @@ const updateAccountDetails = asyncHandler(async(req , res) => {
     .json(new ApiResponse(200, user, "User details updated successfully"));
 })
 
-export {registerUser , loginUser , logoutUser , getCurrentUser , updateAccountDetails}
+const updateUserAvatar = asyncHandler(async (req, res) => {
+    const avatarLocalPath = req.file?.path;
+    console.log(avatarLocalPath);
+  
+    if (!avatarLocalPath) {
+      throw new ApiError(400, "Please select an image");
+    }
+  
+    try {
+      const avatar = await uploadOnCloudinary(avatarLocalPath);
+  
+      if (!avatar.url) {
+        throw new ApiError(500, "Unable to upload image on Cloudinary");
+      }
+  
+      const prevUser = await User.findById(req.user?.id);
+      //   console.log("PrevUser", prevUser);
+      const prevAvatar = prevUser.avatar;
+      //   console.log("prevAvatar", prevAvatar);
+  
+      const user = await User.findByIdAndUpdate(
+        req.user?.id,
+        {
+          $set: {
+            avatar: avatar.url,
+          },
+        },
+        { new: true }
+      ).select("-password");
+  
+      const avatarPublicId = avatar.url.split("/").pop().split(".")[0];
+      //   console.log("avatarPublicId", avatarPublicId);
+      const prevAvatarPublicId = prevAvatar
+        ? prevAvatar.split("/").pop().split(".")[0]
+        : null;
+      //   console.log("prevAvatarPublicId", prevAvatarPublicId);
+  
+      if (prevAvatar && avatarPublicId !== prevAvatarPublicId) {
+        await removeProfilePic(prevAvatarPublicId);
+        console.log("Successfully removed previous avatar from Cloudinary");
+      }
+  
+      return res
+        .status(200)
+        .json(new ApiResponse(200, user, "Avatar updated successfully"));
+    } catch (error) {
+      console.error("Error updating avatar:", error.message);
+      throw new ApiError(500, "Error updating avatar");
+    }
+  });
+
+export {registerUser , loginUser , logoutUser , getCurrentUser , updateAccountDetails , updateUserAvatar}
