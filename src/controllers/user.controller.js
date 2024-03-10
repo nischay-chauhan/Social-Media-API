@@ -233,4 +233,46 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     }
   });
 
-export {registerUser , loginUser , logoutUser , getCurrentUser , updateAccountDetails , updateUserAvatar}
+const followUser = asyncHandler(async(req  , res) => {
+  const {userId} = req.params;
+
+  if(!userId){
+    throw new ApiError(400 , "Invalid User Id or User Id is Required");
+  }
+
+  const UserToFollow = await User.findById(userId);
+  if(!UserToFollow){
+    throw new ApiError(404 , "User to Follow not  found");
+  }
+
+  if(req.user.id === userId){
+    throw new ApiError(400 , "You cannot follow yourself");
+  }
+  if(req.user.following.includes(userId)){
+    throw new ApiError(400 , "You are already following this user");
+  }
+
+  req.user.following.push(userId);
+  const updatedUser = await req.user.save();
+  if(!updatedUser){
+    throw new ApiError(500 , "Something went wrong while following user");
+  }
+
+  UserToFollow.followers.push(req.user.id);
+  const updatedUserToFollow = await UserToFollow.save();
+
+  if(!updatedUserToFollow){
+    throw new ApiError(500 , "Something went wrong while following user");
+  }
+  
+  return res
+  .status(200)
+  .json(new ApiResponse(200 , "User followed successfully"));
+
+})
+
+
+
+export {registerUser , loginUser , logoutUser , getCurrentUser , updateAccountDetails , updateUserAvatar , followUser}
+
+/* 65ec8c4693da675e9d700b16 */
