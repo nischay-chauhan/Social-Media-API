@@ -88,4 +88,24 @@ const updatePost = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, updatedPost, "Post Updated Successfully"));
 });
 
-export {createPost , getSpecificUserPosts , updatePost}
+const deletePost = asyncHandler(async(req  , res) => {
+    const postId = req.params.id;
+    const userId = String(req.user.id);
+    const post = await Post.findById(postId);
+    const postUserId = String(post.user);
+
+    if(userId !== postUserId){
+        throw new ApiError(403 , "You are not authorized to delete this post");
+    }
+
+    const deletedPost = await Post.findByIdAndDelete(postId);
+    if(!deletedPost){
+        throw new ApiError(404 , "Post not found");
+    }
+
+    return res.status(200).json(new ApiResponse(200 , "Post Deleted Successfully"));
+
+
+})
+
+export {createPost , getSpecificUserPosts , updatePost , deletePost}
