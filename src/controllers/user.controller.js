@@ -272,7 +272,41 @@ const followUser = asyncHandler(async(req  , res) => {
 })
 
 
+const unfollowUser = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
 
-export {registerUser , loginUser , logoutUser , getCurrentUser , updateAccountDetails , updateUserAvatar , followUser}
+  if (!userId) {
+      throw new ApiError(400, "User Id is required");
+  }
+
+  const userToUnfollow = await User.findById(userId);
+
+  if(req.user.id == userId){
+    throw new ApiError(400 , "You cannot unfollow yourself");
+  }
+
+  if (!userToUnfollow) {
+      throw new ApiError(404, "User to unfollow not found");
+  }
+
+  if (!req.user.following.includes(userId)) {
+      throw new ApiError(400, "You are not following this user");
+  }
+
+  req.user.following = req.user.following.filter(id => id.toString() !== userId);
+  await req.user.save();
+
+  userToUnfollow.followers = userToUnfollow.followers.filter(id => id.toString() !== req.user._id.toString());
+  const updatedUserToUnfollow = await userToUnfollow.save();
+  if(!updatedUserToUnfollow){
+    throw new ApiError(500 , "Something went wrong while unfollowing user");
+  }
+  return res.status(200).json(new ApiResponse(200, {}, "Successfully unfollowed user"));
+});
+
+
+
+
+export {registerUser , loginUser , logoutUser , getCurrentUser , updateAccountDetails , updateUserAvatar , followUser , unfollowUser}
 
 /* 65ec8c4693da675e9d700b16 */

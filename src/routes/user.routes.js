@@ -1,6 +1,6 @@
 import {  Router } from "express";
 import { upload } from "../middleware/multer.middleware.js";
-import { followUser, getCurrentUser, loginUser, logoutUser, registerUser, updateAccountDetails, updateUserAvatar } from "../controllers/user.controller.js";
+import { followUser, getCurrentUser, loginUser, logoutUser, registerUser, unfollowUser, updateAccountDetails, updateUserAvatar } from "../controllers/user.controller.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
 
 const router = Router();
@@ -15,4 +15,6 @@ router.route("/avatar").patch(verifyJWT , upload.single("avatar") , updateUserAv
 
 
 router.route("/follow/:userId").post( verifyJWT , followUser);
+router.route("/unfollow/:userId").post( verifyJWT , unfollowUser);
+
 export default router;
