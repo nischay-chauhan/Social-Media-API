@@ -55,5 +55,37 @@ const getSpecificUserPosts = asyncHandler(async(req , res) => {
     return res.status(200).json(new ApiResponse(200 , posts , "Posts fetched successfully"));
 });
 
+const updatePost = asyncHandler(async (req, res) => {
+    const postId = req.params.id;
+    
+    if (!postId) {
+        throw new ApiError(400, "Invalid Post Id or Post Id is Required");
+    }
 
-export {createPost , getSpecificUserPosts}
+    const post = await Post.findById(postId);
+    const postUserId = String(post.user);
+    const reqUserId = String(req.user.id);
+
+    if (reqUserId !== postUserId) {
+        throw new ApiError(403, "You are not authorized to update this post");
+    }
+
+    if (!post) {
+        throw new ApiError(404, "Post not found");
+    }
+
+    const { content } = req.body;
+    if (!content.trim()) {
+        throw new ApiError(400, "Post Content is Required");
+    }
+
+    const updatedPost = await Post.findByIdAndUpdate(postId, { content }, { new: true });
+
+    if (!updatedPost) {
+        throw new ApiError(404, "Post not found");
+    }
+
+    return res.status(200).json(new ApiResponse(200, updatedPost, "Post Updated Successfully"));
+});
+
+export {createPost , getSpecificUserPosts , updatePost}
